@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "sceptre": {
+      "command": "uvx",
+      "args": ["--from", ".", "sceptre-mcp-server"],
+      "env": {
+        "AWS_PROFILE": "default",
+        "AWS_REGION": "us-east-1",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
