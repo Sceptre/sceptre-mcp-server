@@ -157,4 +157,3 @@ python -m sceptre_mcp_server.server
 ## License
 
 See LICENSE file.
-
