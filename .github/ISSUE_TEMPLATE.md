@@ -7,7 +7,7 @@ Describe your issue here.
 * which OS/distro
 
 ### Steps to reproduce
-Tell us how to reproduce this issue. Please provide sceptre projct files if possible,
+Tell us how to reproduce this issue. Please provide sceptre project files if possible,
 you can use https://plnkr.co/edit/ANFHm61Ilt4mQVgF as a base.
 
 ### Expected behaviour

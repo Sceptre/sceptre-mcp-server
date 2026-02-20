@@ -138,11 +138,10 @@ Result: Shows drift detection results with any configuration changes.
 ## Development
 
 ```bash
-# Install dependencies
-pip install -e ".[dev]"
+# Install package in editable mode
+pip install -e .
 
-# Run tests
-pytest
+# (No automated test suite is currently provided for this project.)
 
 # Run the server directly
 python -m sceptre_mcp_server.server
@@ -158,4 +157,4 @@ python -m sceptre_mcp_server.server
 ## License
 
 See LICENSE file.
-A Model Context Protocol server for Sceptre
+
