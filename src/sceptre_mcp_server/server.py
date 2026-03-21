@@ -240,7 +240,7 @@ def generate_template(sceptre_project_dir: str, stack_path: str) -> str:
 
     :param sceptre_project_dir: Path to the Sceptre project directory.
     :param stack_path: Relative path to the stack config within the project.
-    :returns: The rendered CloudFormation template body.
+    :returns: Formatted result containing the rendered CloudFormation template body.
     """
     return _execute_tool(sceptre_project_dir, stack_path, "generate")
 
