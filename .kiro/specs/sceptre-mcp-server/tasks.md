@@ -41,11 +41,11 @@
 
 ## Task 6: Implement Diff and Drift Tools
 
-- [ ] 6. Implement diff and drift MCP tools
-  - [ ] 6.1 Implement `diff_stack(sceptre_project_dir, stack_path, diff_type="deepdiff") -> str` tool that creates the appropriate StackDiffer and formats output via DiffWriter
-  - [ ] 6.2 Implement `drift_detect(sceptre_project_dir, stack_path) -> str` tool
-  - [ ] 6.3 Implement `drift_show(sceptre_project_dir, stack_path, drifted_only=False) -> str` tool
-  - [ ] 6.4 Write unit tests for `diff_stack`, `drift_detect`, and `drift_show` with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
+- [x] 6. Implement diff and drift MCP tools
+  - [x] 6.1 Implement `diff_stack(sceptre_project_dir, stack_path, diff_type="deepdiff") -> str` tool that creates the appropriate StackDiffer and formats output via DiffWriter
+  - [x] 6.2 Implement `drift_detect(sceptre_project_dir, stack_path) -> str` tool
+  - [x] 6.3 Implement `drift_show(sceptre_project_dir, stack_path, drifted_only=False) -> str` tool
+  - [x] 6.4 Write unit tests for `diff_stack`, `drift_detect`, and `drift_show` with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
 
 ## Task 7: Implement Discovery and Configuration Tools
 
