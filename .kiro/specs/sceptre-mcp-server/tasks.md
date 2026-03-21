@@ -33,10 +33,10 @@
 
 ## Task 5: Implement Template Tools
 
-- [ ] 5. Implement template MCP tools
-  - [ ] 5.1 Implement `generate_template(sceptre_project_dir, stack_path) -> str` tool
-  - [ ] 5.2 Implement `validate_template(sceptre_project_dir, stack_path) -> str` tool
-  - [ ] 5.3 Write unit tests for `generate_template` and `validate_template` with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
+- [x] 5. Implement template MCP tools
+  - [x] 5.1 Implement `generate_template(sceptre_project_dir, stack_path) -> str` tool
+  - [x] 5.2 Implement `validate_template(sceptre_project_dir, stack_path) -> str` tool
+  - [x] 5.3 Write unit tests for `generate_template` and `validate_template` with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
 
 
 ## Task 6: Implement Diff and Drift Tools
