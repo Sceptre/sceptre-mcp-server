@@ -17,7 +17,7 @@ The sceptre-mcp-server is a Python MCP server built on the FastMCP framework tha
                                           │  │ update_stack   │  │
                                           │  │ delete_stack   │  │
                                           │  │ launch_stack   │  │
-                                          │  │ get_status     │  │
+                                          │  │ get_stack_status│  │
                                           │  │ describe_stack │  │
                                           │  │ ...            │  │
                                           │  └────────────────┘  │
