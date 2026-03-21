@@ -343,6 +343,54 @@ def drift_show(
     return _execute_tool(sceptre_project_dir, stack_path, "drift_show", drifted_only)
 
 
+@mcp.tool()
+def list_stacks(sceptre_project_dir: str, stack_path: str = "") -> str:
+    """List available stacks in a Sceptre project.
+
+    Scans the project configuration and returns all stack names with their
+    corresponding CloudFormation external names.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Optional relative path to scope listing to a stack group.
+        Defaults to "" (all stacks).
+    :returns: Formatted list of stacks with names and external names.
+    """
+
+    def _run():
+        _validate_project_dir(sceptre_project_dir)
+        context = SceptreContext(
+            project_path=sceptre_project_dir,
+            command_path=stack_path,
+        )
+        plan = SceptrePlan(context)
+        plan.resolve(command="list")
+
+        stacks = {}
+        for stack in plan.graph:
+            stacks[stack.name] = stack.external_name
+
+        if not stacks:
+            return f"No stacks found for path '{stack_path or '(all)'}'."
+
+        lines = [f"Stacks in '{stack_path or '(all)'}':"]
+        for name, external_name in sorted(stacks.items()):
+            lines.append(f"  {name} -> {external_name}")
+        return "\n".join(lines)
+
+    return _safe_execute(stack_path or "(all)", _run)
+
+
+@mcp.tool()
+def dump_config(sceptre_project_dir: str, stack_path: str) -> str:
+    """Dump the resolved Sceptre configuration for a stack.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :returns: Formatted result containing the fully resolved stack configuration.
+    """
+    return _execute_tool(sceptre_project_dir, stack_path, "dump_config")
+
+
 def main():
     """Entry point for the sceptre-mcp-server console script."""
     mcp.run()
