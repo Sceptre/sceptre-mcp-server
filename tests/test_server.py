@@ -19,6 +19,9 @@ from sceptre_mcp_server.server import (
     describe_stack_events,
     describe_stack_outputs,
     describe_stack_resources,
+    diff_stack,
+    drift_detect,
+    drift_show,
     generate_template,
     get_stack_status,
     launch_stack,
@@ -39,6 +42,9 @@ _describe_stack_resources = describe_stack_resources.fn
 _describe_stack_events = describe_stack_events.fn
 _generate_template = generate_template.fn
 _validate_template = validate_template.fn
+_diff_stack = diff_stack.fn
+_drift_detect = drift_detect.fn
+_drift_show = drift_show.fn
 
 
 def test_server_name():
@@ -550,6 +556,221 @@ class TestValidateTemplate:
         mock_plan_cls.return_value = mock_plan
 
         result = _validate_template(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+# --- Diff and Drift tool tests ---
+
+
+class TestDiffStack:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    @patch("sceptre_mcp_server.server.DeepDiffWriter")
+    @patch("sceptre_mcp_server.server.DeepDiffStackDiffer")
+    def test_success_deepdiff(
+        self, mock_differ_cls, mock_writer_cls, mock_ctx, mock_plan_cls, tmp_path
+    ):
+        (tmp_path / "config").mkdir()
+        mock_differ = MagicMock()
+        mock_differ_cls.return_value = mock_differ
+
+        mock_stack_diff = MagicMock()
+        mock_plan = MagicMock()
+        mock_plan.diff.return_value = {"my-stack": mock_stack_diff}
+        mock_plan_cls.return_value = mock_plan
+
+        mock_writer = MagicMock()
+        mock_writer.has_difference = True
+
+        def write_side_effect():
+            # Simulate writer writing to the buffer
+            args = mock_writer_cls.call_args
+            output_stream = args[0][1]
+            output_stream.write("Difference detected for stack my-stack\n")
+
+        mock_writer.write.side_effect = write_side_effect
+        mock_writer_cls.return_value = mock_writer
+
+        result = _diff_stack(str(tmp_path), "dev/vpc.yaml")
+
+        mock_differ_cls.assert_called_once()
+        mock_plan.diff.assert_called_once_with(mock_differ)
+        mock_writer_cls.assert_called_once()
+        assert "Difference detected" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    @patch("sceptre_mcp_server.server.DiffLibWriter")
+    @patch("sceptre_mcp_server.server.DifflibStackDiffer")
+    def test_success_difflib(
+        self, mock_differ_cls, mock_writer_cls, mock_ctx, mock_plan_cls, tmp_path
+    ):
+        (tmp_path / "config").mkdir()
+        mock_differ = MagicMock()
+        mock_differ_cls.return_value = mock_differ
+
+        mock_stack_diff = MagicMock()
+        mock_plan = MagicMock()
+        mock_plan.diff.return_value = {"my-stack": mock_stack_diff}
+        mock_plan_cls.return_value = mock_plan
+
+        mock_writer = MagicMock()
+        mock_writer_cls.return_value = mock_writer
+
+        _diff_stack(str(tmp_path), "dev/vpc.yaml", diff_type="difflib")
+
+        mock_differ_cls.assert_called_once()
+        mock_plan.diff.assert_called_once_with(mock_differ)
+        mock_writer_cls.assert_called_once()
+
+    def test_invalid_diff_type(self, tmp_path):
+        (tmp_path / "config").mkdir()
+        result = _diff_stack(str(tmp_path), "dev/vpc.yaml", diff_type="invalid")
+        assert "Invalid diff_type" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    @patch("sceptre_mcp_server.server.DeepDiffStackDiffer")
+    def test_sceptre_error(self, mock_differ_cls, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.diff.side_effect = SceptreException("diff failed")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _diff_stack(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Sceptre error" in result
+        assert "dev/vpc.yaml" in result
+
+    def test_invalid_project_dir(self):
+        result = _diff_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    @patch("sceptre_mcp_server.server.DeepDiffStackDiffer")
+    def test_unexpected_error(self, mock_differ_cls, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.diff.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _diff_stack(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestDriftDetect:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_detect.return_value = {"my-stack": "DETECTION_COMPLETE"}
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_detect(str(tmp_path), "dev/vpc.yaml")
+
+        mock_plan.drift_detect.assert_called_once()
+        assert "Stack: my-stack" in result
+        assert "DETECTION_COMPLETE" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_detect.side_effect = SceptreException("drift failed")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_detect(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Sceptre error" in result
+        assert "dev/vpc.yaml" in result
+
+    def test_invalid_project_dir(self):
+        result = _drift_detect("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_detect.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_detect(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestDriftShow:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_show.return_value = {
+            "my-stack": {
+                "StackResourceDriftStatus": "MODIFIED",
+                "LogicalResourceId": "MyVpc",
+            }
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_show(str(tmp_path), "dev/vpc.yaml")
+
+        mock_plan.drift_show.assert_called_once_with(False)
+        assert "Stack: my-stack" in result
+        assert "MyVpc" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_drifted_only(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_show.return_value = {"my-stack": {"Status": "DRIFTED"}}
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_show(str(tmp_path), "dev/vpc.yaml", drifted_only=True)
+
+        mock_plan.drift_show.assert_called_once_with(True)
+        assert "Stack: my-stack" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_show.side_effect = SceptreException("drift show failed")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_show(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Sceptre error" in result
+        assert "dev/vpc.yaml" in result
+
+    def test_invalid_project_dir(self):
+        result = _drift_show("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.drift_show.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _drift_show(str(tmp_path), "dev/vpc.yaml")
 
         assert "Unexpected error" in result
         assert "RuntimeError" in result

@@ -1,5 +1,6 @@
 """sceptre-mcp-server: MCP server exposing Sceptre CloudFormation operations as tools."""
 
+import io
 import json
 import os
 from datetime import datetime
@@ -8,6 +9,8 @@ from enum import Enum
 from fastmcp import FastMCP
 
 from sceptre.context import SceptreContext
+from sceptre.diffing.diff_writer import DeepDiffWriter, DiffLibWriter
+from sceptre.diffing.stack_differ import DeepDiffStackDiffer, DifflibStackDiffer
 from sceptre.exceptions import SceptreException
 from sceptre.plan.plan import SceptrePlan
 
@@ -254,6 +257,84 @@ def validate_template(sceptre_project_dir: str, stack_path: str) -> str:
     :returns: Validation result or error details.
     """
     return _execute_tool(sceptre_project_dir, stack_path, "validate")
+
+
+@mcp.tool()
+def diff_stack(
+    sceptre_project_dir: str,
+    stack_path: str,
+    diff_type: str = "deepdiff",
+) -> str:
+    """Diff a CloudFormation stack's local template against its deployed state via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param diff_type: Type of differ to use: "deepdiff" (default) or "difflib".
+    :returns: Formatted diff output or error message.
+    """
+    try:
+        _validate_project_dir(sceptre_project_dir)
+        if diff_type == "difflib":
+            stack_differ = DifflibStackDiffer()
+            writer_class = DiffLibWriter
+        elif diff_type == "deepdiff":
+            stack_differ = DeepDiffStackDiffer()
+            writer_class = DeepDiffWriter
+        else:
+            raise ValueError(
+                f"Invalid diff_type '{diff_type}'. Must be 'deepdiff' or 'difflib'."
+            )
+
+        context = SceptreContext(
+            project_path=sceptre_project_dir,
+            command_path=stack_path,
+            ignore_dependencies=False,
+        )
+        plan = SceptrePlan(context)
+        diffs = plan.diff(stack_differ)
+
+        output_buffer = io.StringIO()
+        for stack_diff in diffs.values():
+            writer = writer_class(stack_diff, output_buffer, "yaml")
+            writer.write()
+
+        return (
+            output_buffer.getvalue().strip()
+            or f"No differences found for '{stack_path}'."
+        )
+    except ValueError as e:
+        return f"Invalid project configuration for '{stack_path}': {e}"
+    except SceptreException as e:
+        return f"Sceptre error for '{stack_path}': {type(e).__name__}: {e}"
+    except Exception as e:
+        return f"Unexpected error for '{stack_path}': {type(e).__name__}: {e}"
+
+
+@mcp.tool()
+def drift_detect(sceptre_project_dir: str, stack_path: str) -> str:
+    """Detect configuration drift on a deployed CloudFormation stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :returns: Drift detection status or error message.
+    """
+    return _execute_tool(sceptre_project_dir, stack_path, "drift_detect")
+
+
+@mcp.tool()
+def drift_show(
+    sceptre_project_dir: str,
+    stack_path: str,
+    drifted_only: bool = False,
+) -> str:
+    """Show drift details for a deployed CloudFormation stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param drifted_only: If True, only show resources that have drifted.
+    :returns: Resource-level drift details or error message.
+    """
+    return _execute_tool(sceptre_project_dir, stack_path, "drift_show", drifted_only)
 
 
 def main():
