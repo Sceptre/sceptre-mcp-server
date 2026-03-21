@@ -13,15 +13,23 @@ from sceptre_mcp_server.server import (
     _make_serializable,
     _run_sceptre_command,
     _validate_project_dir,
+    create_stack,
+    delete_stack,
     describe_stack,
     describe_stack_events,
     describe_stack_outputs,
     describe_stack_resources,
     get_stack_status,
+    launch_stack,
     mcp,
+    update_stack,
 )
 
 # Unwrap FunctionTool objects to get the callable functions
+_create_stack = create_stack.fn
+_update_stack = update_stack.fn
+_delete_stack = delete_stack.fn
+_launch_stack = launch_stack.fn
 _get_stack_status = get_stack_status.fn
 _describe_stack = describe_stack.fn
 _describe_stack_outputs = describe_stack_outputs.fn
@@ -199,6 +207,37 @@ class TestRunSceptreCommand:
         )
 
 
+# --- Lifecycle tool tests ---
+
+
+class TestCreateStack:
+    def test_invalid_project_dir(self):
+        result = _create_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+
+class TestUpdateStack:
+    def test_invalid_project_dir(self):
+        result = _update_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+
+class TestDeleteStack:
+    def test_invalid_project_dir(self):
+        result = _delete_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+
+class TestLaunchStack:
+    def test_invalid_project_dir(self):
+        result = _launch_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+
 # --- Query tool tests ---
 
 
@@ -268,6 +307,11 @@ class TestDescribeStack:
 
         assert "Sceptre error" in result
 
+    def test_invalid_project_dir(self):
+        result = _describe_stack("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
 
 class TestDescribeStackOutputs:
     @patch("sceptre_mcp_server.server.SceptrePlan")
@@ -298,6 +342,11 @@ class TestDescribeStackOutputs:
         result = _describe_stack_outputs(str(tmp_path), "dev/vpc.yaml")
 
         assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _describe_stack_outputs("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
 
 
 class TestDescribeStackResources:
@@ -337,6 +386,11 @@ class TestDescribeStackResources:
 
         assert "Sceptre error" in result
 
+    def test_invalid_project_dir(self):
+        result = _describe_stack_resources("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
 
 class TestDescribeStackEvents:
     @patch("sceptre_mcp_server.server.SceptrePlan")
@@ -373,6 +427,11 @@ class TestDescribeStackEvents:
         result = _describe_stack_events(str(tmp_path), "dev/vpc.yaml")
 
         assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _describe_stack_events("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
 
     @patch("sceptre_mcp_server.server.SceptrePlan")
     @patch("sceptre_mcp_server.server.SceptreContext")
