@@ -13,8 +13,11 @@ from sceptre_mcp_server.server import (
     _make_serializable,
     _run_sceptre_command,
     _validate_project_dir,
+    create_change_set,
     create_stack,
+    delete_change_set,
     delete_stack,
+    describe_change_set,
     describe_stack,
     describe_stack_events,
     describe_stack_outputs,
@@ -23,9 +26,11 @@ from sceptre_mcp_server.server import (
     drift_detect,
     drift_show,
     dump_config,
+    execute_change_set,
     generate_template,
     get_stack_status,
     launch_stack,
+    list_change_sets,
     list_stacks,
     mcp,
     update_stack,
@@ -49,6 +54,13 @@ _drift_detect = drift_detect.fn
 _drift_show = drift_show.fn
 _list_stacks = list_stacks.fn
 _dump_config = dump_config.fn
+
+
+_create_change_set = create_change_set.fn
+_describe_change_set = describe_change_set.fn
+_list_change_sets = list_change_sets.fn
+_execute_change_set = execute_change_set.fn
+_delete_change_set = delete_change_set.fn
 
 
 def test_server_name():
@@ -944,6 +956,255 @@ class TestDumpConfig:
         mock_plan_cls.return_value = mock_plan
 
         result = _dump_config(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+# --- Change set tool tests ---
+
+
+class TestCreateChangeSet:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.create_change_set.return_value = {
+            "my-stack": {"ResponseMetadata": {"HTTPStatusCode": 200}}
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _create_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        mock_plan.create_change_set.assert_called_once_with("my-cs")
+        assert "Stack: my-stack" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.create_change_set.side_effect = SceptreException("fail")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _create_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _create_change_set("/nonexistent", "dev/vpc.yaml", "my-cs")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.create_change_set.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _create_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestDescribeChangeSet:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.describe_change_set.return_value = {
+            "my-stack": {
+                "ChangeSetName": "my-cs",
+                "Status": "CREATE_COMPLETE",
+                "Changes": [],
+            }
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _describe_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        mock_plan.describe_change_set.assert_called_once_with("my-cs")
+        assert "Stack: my-stack" in result
+        assert "my-cs" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.describe_change_set.side_effect = SceptreException("fail")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _describe_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _describe_change_set("/nonexistent", "dev/vpc.yaml", "my-cs")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.describe_change_set.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _describe_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestListChangeSets:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.list_change_sets.return_value = {
+            "my-stack": {
+                "Summaries": [
+                    {"ChangeSetName": "cs-1", "Status": "CREATE_COMPLETE"},
+                    {"ChangeSetName": "cs-2", "Status": "CREATE_PENDING"},
+                ]
+            }
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _list_change_sets(str(tmp_path), "dev/vpc.yaml")
+
+        mock_plan.list_change_sets.assert_called_once()
+        assert "Stack: my-stack" in result
+        assert "cs-1" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.list_change_sets.side_effect = SceptreException("fail")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _list_change_sets(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _list_change_sets("/nonexistent", "dev/vpc.yaml")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.list_change_sets.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _list_change_sets(str(tmp_path), "dev/vpc.yaml")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestExecuteChangeSet:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.execute_change_set.return_value = {
+            "my-stack": {"ResponseMetadata": {"HTTPStatusCode": 200}}
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _execute_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        mock_plan.execute_change_set.assert_called_once_with("my-cs")
+        assert "Stack: my-stack" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.execute_change_set.side_effect = SceptreException("fail")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _execute_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _execute_change_set("/nonexistent", "dev/vpc.yaml", "my-cs")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.execute_change_set.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _execute_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Unexpected error" in result
+        assert "RuntimeError" in result
+
+
+class TestDeleteChangeSet:
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_success(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.delete_change_set.return_value = {
+            "my-stack": {"ResponseMetadata": {"HTTPStatusCode": 200}}
+        }
+        mock_plan_cls.return_value = mock_plan
+
+        result = _delete_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        mock_plan.delete_change_set.assert_called_once_with("my-cs")
+        assert "Stack: my-stack" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_sceptre_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.delete_change_set.side_effect = SceptreException("fail")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _delete_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
+
+        assert "Sceptre error" in result
+
+    def test_invalid_project_dir(self):
+        result = _delete_change_set("/nonexistent", "dev/vpc.yaml", "my-cs")
+        assert "Invalid project configuration" in result
+        assert "dev/vpc.yaml" in result
+
+    @patch("sceptre_mcp_server.server.SceptrePlan")
+    @patch("sceptre_mcp_server.server.SceptreContext")
+    def test_unexpected_error(self, mock_ctx, mock_plan_cls, tmp_path):
+        (tmp_path / "config").mkdir()
+        mock_plan = MagicMock()
+        mock_plan.delete_change_set.side_effect = RuntimeError("boom")
+        mock_plan_cls.return_value = mock_plan
+
+        result = _delete_change_set(str(tmp_path), "dev/vpc.yaml", "my-cs")
 
         assert "Unexpected error" in result
         assert "RuntimeError" in result

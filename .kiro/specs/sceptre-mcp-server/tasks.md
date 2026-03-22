@@ -56,13 +56,13 @@
 
 ## Task 8: Implement Change Set Tools
 
-- [ ] 8. Implement change set MCP tools
-  - [ ] 8.1 Implement `create_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
-  - [ ] 8.2 Implement `describe_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
-  - [ ] 8.3 Implement `list_change_sets(sceptre_project_dir, stack_path) -> str` tool
-  - [ ] 8.4 Implement `execute_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
-  - [ ] 8.5 Implement `delete_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
-  - [ ] 8.6 Write unit tests for all change set tools with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
+- [x] 8. Implement change set MCP tools
+  - [x] 8.1 Implement `create_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
+  - [x] 8.2 Implement `describe_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
+  - [x] 8.3 Implement `list_change_sets(sceptre_project_dir, stack_path) -> str` tool
+  - [x] 8.4 Implement `execute_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
+  - [x] 8.5 Implement `delete_change_set(sceptre_project_dir, stack_path, change_set_name) -> str` tool
+  - [x] 8.6 Write unit tests for all change set tools with mocked SceptrePlan (success, SceptreException, ValueError, generic Exception)
 
 ## Task 9: Write Unit Tests
 

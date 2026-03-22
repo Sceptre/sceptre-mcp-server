@@ -401,6 +401,81 @@ def dump_config(sceptre_project_dir: str, stack_path: str) -> str:
     return _execute_tool(sceptre_project_dir, stack_path, "dump_config")
 
 
+@mcp.tool()
+def create_change_set(
+    sceptre_project_dir: str, stack_path: str, change_set_name: str
+) -> str:
+    """Create a CloudFormation change set for a stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param change_set_name: Name for the new change set.
+    :returns: Formatted result with stack name and change set status.
+    """
+    return _execute_tool(
+        sceptre_project_dir, stack_path, "create_change_set", change_set_name
+    )
+
+
+@mcp.tool()
+def describe_change_set(
+    sceptre_project_dir: str, stack_path: str, change_set_name: str
+) -> str:
+    """Describe a CloudFormation change set for a stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param change_set_name: Name of the change set to describe.
+    :returns: Formatted result with change set details.
+    """
+    return _execute_tool(
+        sceptre_project_dir, stack_path, "describe_change_set", change_set_name
+    )
+
+
+@mcp.tool()
+def list_change_sets(sceptre_project_dir: str, stack_path: str) -> str:
+    """List all change sets for a CloudFormation stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :returns: Formatted result with available change sets.
+    """
+    return _execute_tool(sceptre_project_dir, stack_path, "list_change_sets")
+
+
+@mcp.tool()
+def execute_change_set(
+    sceptre_project_dir: str, stack_path: str, change_set_name: str
+) -> str:
+    """Execute a CloudFormation change set for a stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param change_set_name: Name of the change set to execute.
+    :returns: Formatted result with stack name and status after execution.
+    """
+    return _execute_tool(
+        sceptre_project_dir, stack_path, "execute_change_set", change_set_name
+    )
+
+
+@mcp.tool()
+def delete_change_set(
+    sceptre_project_dir: str, stack_path: str, change_set_name: str
+) -> str:
+    """Delete a CloudFormation change set for a stack via Sceptre.
+
+    :param sceptre_project_dir: Path to the Sceptre project directory.
+    :param stack_path: Relative path to the stack config within the project.
+    :param change_set_name: Name of the change set to delete.
+    :returns: Formatted result confirming change set deletion.
+    """
+    return _execute_tool(
+        sceptre_project_dir, stack_path, "delete_change_set", change_set_name
+    )
+
+
 def main():
     """Entry point for the sceptre-mcp-server console script."""
     mcp.run()
