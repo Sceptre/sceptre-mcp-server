@@ -1,12 +1,20 @@
 [tool.poetry]
 name = "sceptre-mcp-server"
-version = "0.1.0"
+version = "1.0.0"
 description = "MCP server for Sceptre CloudFormation management"
 authors = ["Sceptre <sceptreorg@gmail.com>"]
 readme = "README.md"
 license = "Apache-2.0"
 packages = [{include = "sceptre_mcp_server", from = "src"}]
 keywords = ["aws", "cloud", "devops", "infrastructure", "tools", "cli"]
+repository = "https://github.com/Sceptre/sceptre-mcp-server"
+documentation = "https://github.com/Sceptre/sceptre-mcp-server/blob/main/README.md"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Environment :: Console",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
