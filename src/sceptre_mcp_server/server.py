@@ -6,6 +6,7 @@ import logging
 import os
 from datetime import datetime
 from enum import Enum
+from typing import Any, Callable
 
 from fastmcp import FastMCP
 
@@ -17,7 +18,7 @@ from sceptre.plan.plan import SceptrePlan
 
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP("sceptre-mcp-server")
+mcp: FastMCP = FastMCP("sceptre-mcp-server")
 
 
 def _validate_project_dir(sceptre_project_dir: str) -> None:
@@ -93,9 +94,9 @@ def _run_sceptre_command(
     sceptre_project_dir: str,
     command_path: str,
     command: str,
-    *args,
+    *args: Any,
     ignore_dependencies: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """Create a SceptreContext and SceptrePlan, then execute the given command.
 
     :param sceptre_project_dir: Path to the Sceptre project directory.
@@ -108,12 +109,12 @@ def _run_sceptre_command(
     plan = _build_plan(sceptre_project_dir, command_path, ignore_dependencies)
     plan_command = getattr(plan, command)
     logger.info("Executing command '%s' on path '%s'", command, command_path)
-    result = plan_command(*args)
+    result: dict[str, Any] = plan_command(*args)
     logger.info("Command '%s' on path '%s' completed", command, command_path)
     return result
 
 
-def _make_serializable(obj):
+def _make_serializable(obj: Any) -> Any:
     """Recursively convert non-serializable objects to strings.
 
     Handles Enum members, datetime objects, and other non-JSON-serializable types
@@ -130,7 +131,7 @@ def _make_serializable(obj):
     return obj
 
 
-def _format_response(result: dict, command: str) -> str:
+def _format_response(result: dict[str, Any], command: str) -> str:
     """Format a Sceptre response dict into human-readable text.
 
     :param result: The raw result dict from SceptrePlan, typically
@@ -152,7 +153,9 @@ def _format_response(result: dict, command: str) -> str:
     return "\n".join(lines).strip()
 
 
-def _safe_execute(stack_path: str, fn, *args, **kwargs) -> str:
+def _safe_execute(
+    stack_path: str, fn: Callable[..., str], *args: Any, **kwargs: Any
+) -> str:
     """Run *fn* with standard Sceptre error handling.
 
     :param stack_path: Used only for error messages.
@@ -189,7 +192,7 @@ def _execute_tool(
     sceptre_project_dir: str,
     stack_path: str,
     command: str,
-    *args,
+    *args: Any,
     ignore_dependencies: bool = False,
 ) -> str:
     """Execute a Sceptre command with standard error handling.
@@ -205,7 +208,7 @@ def _execute_tool(
     :returns: Formatted result string or error message.
     """
 
-    def _run():
+    def _run() -> str:
         result = _run_sceptre_command(
             sceptre_project_dir,
             stack_path,
@@ -356,7 +359,7 @@ def diff_stack(
         logger.warning("Invalid diff_type requested: '%s'", diff_type)
         return f"Invalid diff_type '{diff_type}'. Must be 'deepdiff' or 'difflib'."
 
-    def _run():
+    def _run() -> str:
         logger.info("Running %s diff on '%s'", diff_type, stack_path)
         if diff_type == "difflib":
             stack_differ = DifflibStackDiffer()
@@ -422,7 +425,7 @@ def list_stacks(sceptre_project_dir: str, stack_path: str = "") -> str:
     :returns: Formatted list of stacks with names and external names.
     """
 
-    def _run():
+    def _run() -> str:
         plan = _build_plan(sceptre_project_dir, stack_path)
         plan.resolve(command="list")
 
@@ -533,6 +536,6 @@ def delete_change_set(
     )
 
 
-def main():
+def main() -> None:
     """Entry point for the sceptre-mcp-server console script."""
     mcp.run()
