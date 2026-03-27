@@ -8,6 +8,6 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "pytest -q --tb=short ${file} 2>/dev/null || true"
+    "command": "poetry run pytest -q --tb=short ${file} 2>/dev/null || true"
   }
 }
