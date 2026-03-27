@@ -1,13 +1,18 @@
 {
   "name": "Lint on Save",
   "version": "1.0.0",
-  "description": "Automatically format and lint Python files on save using black, isort, and flake8",
+  "description": "Run pre-commit hooks on saved Python files",
   "when": {
     "type": "fileEdited",
-    "patterns": ["*.py"]
+    "patterns": [
+      "*.py",
+      "*.yaml",
+      "*.yml",
+      "*.json"
+    ]
   },
   "then": {
     "type": "runCommand",
-    "command": "black --quiet ${file} && isort --quiet ${file} && flake8 --quiet ${file} 2>/dev/null || true"
+    "command": "pre-commit run --files ${file}"
   }
 }

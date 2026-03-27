@@ -2,6 +2,7 @@
 
 import io
 import json
+import logging
 import os
 from datetime import datetime
 from enum import Enum
@@ -13,6 +14,8 @@ from sceptre.diffing.diff_writer import DeepDiffWriter, DiffLibWriter
 from sceptre.diffing.stack_differ import DeepDiffStackDiffer, DifflibStackDiffer
 from sceptre.exceptions import SceptreException
 from sceptre.plan.plan import SceptrePlan
+
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP("sceptre-mcp-server")
 
@@ -34,6 +37,7 @@ def _validate_project_dir(sceptre_project_dir: str) -> None:
         raise ValueError(
             f"Sceptre project directory does not contain a config/ subdirectory: {sceptre_project_dir}"
         )
+    logger.debug("Validated project directory: %s", sceptre_project_dir)
 
 
 def _build_plan(
@@ -75,7 +79,10 @@ def _run_sceptre_command(
     """
     plan = _build_plan(sceptre_project_dir, command_path, ignore_dependencies)
     plan_command = getattr(plan, command)
-    return plan_command(*args)
+    logger.info("Executing command '%s' on path '%s'", command, command_path)
+    result = plan_command(*args)
+    logger.info("Command '%s' on path '%s' completed", command, command_path)
+    return result
 
 
 def _make_serializable(obj):
@@ -129,10 +136,24 @@ def _safe_execute(stack_path: str, fn, *args, **kwargs) -> str:
     try:
         return fn(*args, **kwargs)
     except ValueError as e:
+        logger.warning("Invalid configuration for '%s': %s", stack_path, e)
         return f"Invalid project configuration for '{stack_path}': {e}"
     except SceptreException as e:
+        logger.error(
+            "Sceptre error for '%s': %s: %s",
+            stack_path,
+            type(e).__name__,
+            e,
+        )
         return f"Sceptre error for '{stack_path}': {type(e).__name__}: {e}"
     except Exception as e:
+        logger.error(
+            "Unexpected error for '%s': %s: %s",
+            stack_path,
+            type(e).__name__,
+            e,
+            exc_info=True,
+        )
         return f"Unexpected error for '{stack_path}': {type(e).__name__}: {e}"
 
 
@@ -304,9 +325,11 @@ def diff_stack(
     :returns: Formatted diff output or error message.
     """
     if diff_type not in ("deepdiff", "difflib"):
+        logger.warning("Invalid diff_type requested: '%s'", diff_type)
         return f"Invalid diff_type '{diff_type}'. Must be 'deepdiff' or 'difflib'."
 
     def _run():
+        logger.info("Running %s diff on '%s'", diff_type, stack_path)
         if diff_type == "difflib":
             stack_differ = DifflibStackDiffer()
             writer_class = DiffLibWriter
@@ -380,8 +403,14 @@ def list_stacks(sceptre_project_dir: str, stack_path: str = "") -> str:
             stacks[stack.name] = stack.external_name
 
         if not stacks:
+            logger.info("No stacks found for path '%s'", stack_path or "(all)")
             return f"No stacks found for path '{stack_path or '(all)'}'."
 
+        logger.info(
+            "Found %d stack(s) for path '%s'",
+            len(stacks),
+            stack_path or "(all)",
+        )
         lines = [f"Stacks in '{stack_path or '(all)'}':"]
         for name, external_name in sorted(stacks.items()):
             lines.append(f"  {name} -> {external_name}")
