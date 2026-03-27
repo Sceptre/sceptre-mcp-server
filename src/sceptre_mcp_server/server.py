@@ -40,6 +40,33 @@ def _validate_project_dir(sceptre_project_dir: str) -> None:
     logger.debug("Validated project directory: %s", sceptre_project_dir)
 
 
+def _validate_stack_path(stack_path: str) -> None:
+    """Validate that a stack path is safe and well-formed.
+
+    Rejects path traversal sequences, absolute paths, null bytes, and
+    other potentially dangerous patterns.
+
+    :param stack_path: Relative path to the stack config within the project.
+    :raises ValueError: If the path contains unsafe patterns.
+    """
+    if not stack_path:
+        return  # Empty path is valid for list_stacks
+
+    if "\x00" in stack_path:
+        raise ValueError(f"Stack path contains null bytes: {stack_path!r}")
+
+    if os.path.isabs(stack_path):
+        raise ValueError(f"Stack path must be relative, not absolute: {stack_path}")
+
+    normalized = os.path.normpath(stack_path)
+    if normalized.startswith("..") or "/.." in normalized or "\\.." in normalized:
+        raise ValueError(
+            f"Stack path must not contain path traversal (..): {stack_path}"
+        )
+
+    logger.debug("Validated stack path: %s", stack_path)
+
+
 def _build_plan(
     sceptre_project_dir: str,
     command_path: str,
@@ -53,6 +80,7 @@ def _build_plan(
     :returns: A ready-to-use SceptrePlan instance.
     """
     _validate_project_dir(sceptre_project_dir)
+    _validate_stack_path(command_path)
     context = SceptreContext(
         project_path=sceptre_project_dir,
         command_path=command_path,
