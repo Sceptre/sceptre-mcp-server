@@ -13,6 +13,7 @@ from sceptre_mcp_server.server import (
     _make_serializable,
     _run_sceptre_command,
     _validate_project_dir,
+    _validate_stack_path,
     create_change_set,
     create_stack,
     delete_change_set,
@@ -84,6 +85,42 @@ class TestValidateProjectDir:
     def test_missing_config_subdirectory(self, tmp_path):
         with pytest.raises(ValueError, match="does not contain a config/ subdirectory"):
             _validate_project_dir(str(tmp_path))
+
+
+# --- _validate_stack_path tests ---
+
+
+class TestValidateStackPath:
+    def test_valid_path(self):
+        _validate_stack_path("dev/vpc.yaml")
+
+    def test_valid_nested_path(self):
+        _validate_stack_path("prod/us-east-1/api.yaml")
+
+    def test_empty_path_allowed(self):
+        _validate_stack_path("")
+
+    def test_path_traversal_rejected(self):
+        with pytest.raises(ValueError, match="path traversal"):
+            _validate_stack_path("../../../etc/passwd")
+
+    def test_path_traversal_mid_path_rejected(self):
+        with pytest.raises(ValueError, match="path traversal"):
+            _validate_stack_path("dev/../../etc/passwd")
+
+    def test_absolute_path_rejected(self):
+        with pytest.raises(ValueError, match="must be relative"):
+            _validate_stack_path("/etc/passwd")
+
+    def test_null_byte_rejected(self):
+        with pytest.raises(ValueError, match="null bytes"):
+            _validate_stack_path("dev/vpc.yaml\x00.txt")
+
+    def test_tool_rejects_traversal(self, tmp_path):
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        result = _create_stack(str(tmp_path), "../../../etc/passwd")
+        assert "path traversal" in result
 
 
 # --- _make_serializable tests ---
