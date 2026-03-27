@@ -2,7 +2,7 @@
 
 ci:
   autoupdate_schedule: monthly
-  skip: ["poetry-lock"] # work around for https://github.com/pre-commit-ci/issues/issues/241
+  skip: ["poetry-lock", "pytest-coverage", "pytest"] # work around for https://github.com/pre-commit-ci/issues/issues/241
 
 default_language_version:
   python: python3
@@ -36,3 +36,25 @@ repos:
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        args: ["src/","tests/"]
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: pytest-coverage
+        name: pytest-coverage
+        entry: poetry run tox -e coverage
+        language: system
+        pass_filenames: false
+        types: [python]
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: poetry run tox
+        language: system
+        pass_filenames: false
+        types: [python]
