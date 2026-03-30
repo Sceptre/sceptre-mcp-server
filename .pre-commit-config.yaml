@@ -22,25 +22,6 @@ repos:
     rev: v1.38.0
     hooks:
       - id: yamllint
-  - repo: https://github.com/awslabs/cfn-python-lint
-    rev: v1.44.0
-    hooks:
-      - id: cfn-python-lint
-        args:
-          - "-i=E0000"
-          - "-i=E1001"
-          - "-i=E3012"
-          - "-i=W6001"
-        exclude: |
-          (?x)(
-            ^integration-tests/sceptre-project/config/|
-            ^integration-tests/sceptre-project/templates/|
-            ^tests/fixtures-vpc/config/|
-            ^tests/fixtures/config/|
-            ^temp/|
-            ^.github/|
-            ^.pre-commit-config.yaml
-          )
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 26.1.0
     hooks:

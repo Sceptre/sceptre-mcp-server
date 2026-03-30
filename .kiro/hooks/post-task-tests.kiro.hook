@@ -7,6 +7,6 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "pytest -q --tb=short 2>/dev/null || echo 'No test runner found'"
+    "command": "poetry run pytest -q --tb=short 2>/dev/null || echo 'No test runner found'"
   }
 }
