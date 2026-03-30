@@ -6,6 +6,7 @@ import logging
 import os
 from datetime import datetime
 from enum import Enum
+from pathlib import PurePosixPath
 
 from fastmcp import FastMCP
 
@@ -44,7 +45,10 @@ def _validate_stack_path(stack_path: str) -> None:
     """Validate that a stack path is safe and well-formed.
 
     Rejects path traversal sequences, absolute paths, null bytes, and
-    other potentially dangerous patterns.
+    other potentially dangerous patterns.  Uses segment-aware checks via
+    ``pathlib.PurePosixPath`` so that filenames like ``..stack.yaml`` are
+    not falsely rejected while actual ``..`` segments are caught even when
+    ``os.path.normpath`` collapses them (e.g. ``dev/..`` → ``.``).
 
     :param stack_path: Relative path to the stack config within the project.
     :raises ValueError: If the path contains unsafe patterns.
@@ -58,8 +62,7 @@ def _validate_stack_path(stack_path: str) -> None:
     if os.path.isabs(stack_path):
         raise ValueError(f"Stack path must be relative, not absolute: {stack_path}")
 
-    normalized = os.path.normpath(stack_path)
-    if normalized.startswith("..") or "/.." in normalized or "\\.." in normalized:
+    if ".." in PurePosixPath(stack_path).parts:
         raise ValueError(
             f"Stack path must not contain path traversal (..): {stack_path}"
         )

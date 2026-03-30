@@ -100,6 +100,9 @@ class TestValidateStackPath:
     def test_empty_path_allowed(self):
         _validate_stack_path("")
 
+    def test_dotdot_prefix_in_filename_allowed(self):
+        _validate_stack_path("dev/..stack.yaml")
+
     def test_path_traversal_rejected(self):
         with pytest.raises(ValueError, match="path traversal"):
             _validate_stack_path("../../../etc/passwd")
@@ -107,6 +110,10 @@ class TestValidateStackPath:
     def test_path_traversal_mid_path_rejected(self):
         with pytest.raises(ValueError, match="path traversal"):
             _validate_stack_path("dev/../../etc/passwd")
+
+    def test_path_traversal_collapsed_by_normpath(self):
+        with pytest.raises(ValueError, match="path traversal"):
+            _validate_stack_path("dev/..")
 
     def test_absolute_path_rejected(self):
         with pytest.raises(ValueError, match="must be relative"):
