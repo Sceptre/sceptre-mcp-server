@@ -159,49 +159,9 @@ Sceptre uses the standard AWS credential chain. To specify a profile or region, 
 }
 ```
 
-## Project Specs
+## Contributing
 
-Design documentation for this project lives in the `.kiro/specs/sceptre-mcp-server/` directory:
-
-- [Requirements](.kiro/specs/sceptre-mcp-server/requirements.md) — 22 functional requirements covering server init, stack lifecycle, querying, templates, diff/drift, change sets, config dump, parameter conventions, error handling, AWS configuration, and distribution
-- [Design](.kiro/specs/sceptre-mcp-server/design.md) — Architecture, component design, tool specifications, error handling strategy, response format, and traceability matrix
-- [Tasks](.kiro/specs/sceptre-mcp-server/tasks.md) — Implementation task breakdown with sub-tasks
-
-## Development
-
-```bash
-# Clone and install dependencies
-git clone <repo-url>
-cd sceptre-mcp-server
-poetry install
-```
-
-### Running Tests
-
-Run tests directly with pytest:
-
-```bash
-poetry run pytest -q
-```
-
-Run tests through [tox](https://tox.wiki/) for a specific Python version:
-
-```bash
-# Use the virtualenv tox binary directly (poetry run intercepts flags like -e)
-$(poetry env info -p)/bin/tox -e py312
-```
-
-Run against all configured Python versions (3.10–3.13, skips missing interpreters):
-
-```bash
-$(poetry env info -p)/bin/tox
-```
-
-Pass additional pytest arguments via `--`:
-
-```bash
-$(poetry env info -p)/bin/tox -e py312 -- -k "test_create_stack" -q
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, pre-commit hooks, and type checking.
 
 ## License
 
