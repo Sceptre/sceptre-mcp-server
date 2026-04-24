@@ -35,13 +35,6 @@ except ConnectionError as e:
 - Separate concerns: models, services, routes, utils
 - Use dataclasses or Pydantic models for structured data
 
-## Async
-
-- Use `async/await` for I/O-bound operations
-- Use `asyncio.gather()` for concurrent tasks
-- Don't mix sync and async code without proper bridging
-- Use `aiohttp` or `httpx` for async HTTP calls
-
 ## Testing
 
 See `testing.md` for test requirements and `tdd-workflow.md` for the TDD cycle.

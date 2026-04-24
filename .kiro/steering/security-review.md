@@ -14,9 +14,10 @@ Activate this skill to perform a security audit on the codebase or recent change
 - Verify secrets are loaded from `os.environ` or AWS Secrets Manager
 - Look for secrets in comments, TODOs, or test files
 
-### 2. OWASP Top 10 Check
-
-See `security.md` for the full OWASP checklist and dangerous patterns table. During review, verify each item against the changed code.
+### 2. Input Validation Check
+- Verify `stack_path` parameters are validated against path traversal
+- Check that `sceptre_project_dir` is validated before use
+- Ensure error messages don't leak sensitive file system paths
 
 ### 3. Dependency Audit
 - Run `poetry run pip-audit`
