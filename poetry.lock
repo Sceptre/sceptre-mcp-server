@@ -2033,6 +2033,24 @@ docs = ["pygments-github-lexers (>=0.0.5)", "sphinx (>=2.0.0)", "sphinxcontrib-a
 testing = ["flaky (>=3.4.0)", "freezegun (>=0.3.11)", "pathlib2 (>=2.3.3) ; python_version < \"3.4\"", "psutil (>=5.6.1) ; platform_python_implementation == \"cpython\"", "pytest (>=4.0.0)", "pytest-cov (>=2.5.1)", "pytest-mock (>=1.10.0)", "pytest-randomly (>=1.0.0)"]
 
 [[package]]
+name = "tox-gh-matrix"
+version = "0.2.0"
+description = "Generate a GitHub workflow build matrix from the tox.ini envlist"
+optional = false
+python-versions = ">=3.6"
+groups = ["dev"]
+files = [
+    {file = "tox-gh-matrix-0.2.0.tar.gz", hash = "sha256:44ca327a4f74ec4085882571d5c46ec2dcd9ff76d38905416e58d1c1b8ffa1f1"},
+    {file = "tox_gh_matrix-0.2.0-py3-none-any.whl", hash = "sha256:122115d21bdc1fca1ae95eb729d19051d1886a429808b0da844bb26540761f32"},
+]
+
+[package.dependencies]
+tox = ">=3.15.2,<4"
+
+[package.extras]
+testing = ["pytest (>=6.2.0)", "pytest-cov (>=3.0.0)", "pytest-mock (>=3.6.0)", "pytest-xdist (>=2.3.0)"]
+
+[[package]]
 name = "typer"
 version = "0.24.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
@@ -2138,4 +2156,4 @@ typing-extensions = {version = ">=4.13.2", markers = "python_version < \"3.11\""
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "a52e15718fd7defcd5235459053c294390c143a931c5e797c72716b6404b3ac0"
+content-hash = "818aaeff3c072c670965e9c54ea029521a52d04d40c4ad47bcdba6112c4d7084"

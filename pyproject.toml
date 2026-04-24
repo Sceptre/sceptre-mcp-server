@@ -26,6 +26,7 @@ sceptre = ">=4.0.0"
 pytest = "^9.0"
 pytest-cov = "^7.1"
 tox = "^3.23.0"
+tox-gh-matrix = "^0.2"
 mypy = "^1.15"
 
 [tool.poetry.scripts]
