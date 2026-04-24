@@ -24,28 +24,41 @@ jobs:
       - name: Build package
         run: poetry build
 
-  test-coverage:
+  # Run tests in parallel with https://github.com/medmunds/tox-gh-matrix
+  # This job exports the tox envlist in tox.ini to create a matrix job
+  tox-envs:
     runs-on: ubuntu-latest
+    outputs:
+      envlist: ${{ steps.generate-envlist.outputs.envlist }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Install dependencies
+        run: poetry install --no-interaction --all-extras
+      - id: generate-envlist
+        run: poetry run tox --gh-matrix
+
+  # Use the exported envlist to generate a matrix job (a job for each env)
+  unit-test:
+    needs: tox-envs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        tox: ${{ fromJSON(needs.tox-envs.outputs.envlist) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.tox.python.spec }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
       - name: Install dependencies
-        run: poetry install
-      - name: Run coverage
-        run: $(poetry env info -p)/bin/tox -e coverage
-
-  unit-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Install dependencies
-        run: poetry install
-      - name: Run tests
-        run: $(poetry env info -p)/bin/tox
+        run: poetry install --no-interaction --all-extras
+      - name: run test
+        run: poetry run tox -e ${{ matrix.tox.name }}
