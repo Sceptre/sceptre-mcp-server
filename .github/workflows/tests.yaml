@@ -24,7 +24,7 @@ jobs:
       - name: Build package
         run: poetry build
 
-  test-coverage:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,16 +36,24 @@ jobs:
         uses: snok/install-poetry@v1
       - name: Install dependencies
         run: poetry install
-      - name: Run coverage
-        run: $(poetry env info -p)/bin/tox -e coverage
+      - name: Run test with coverage
+        run: $(poetry env info -p)/bin/tox
 
-  unit-test:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
       - name: Install Poetry
         uses: snok/install-poetry@v1
       - name: Install dependencies
         run: poetry install
-      - name: Run tests
-        run: $(poetry env info -p)/bin/tox
+      - name: Run test with coverage
+        run: $(poetry env info -p)/bin/tox -e coverage
