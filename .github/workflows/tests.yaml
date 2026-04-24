@@ -24,7 +24,8 @@ jobs:
       - name: Build package
         run: poetry build
 
-  # use https://github.com/medmunds/tox-gh-matrix to export tox envlist to GH actions
+  # Run tests in parallel with https://github.com/medmunds/tox-gh-matrix
+  # This job exports the tox envlist in tox.ini to create a matrix job
   tox-envs:
     runs-on: ubuntu-latest
     outputs:
@@ -39,6 +40,7 @@ jobs:
       - id: generate-envlist
         run: poetry run tox --gh-matrix
 
+  # Use the exported envlist to generate a matrix job (a job for each env)
   unit-test:
     needs: tox-envs
     runs-on: ubuntu-latest
